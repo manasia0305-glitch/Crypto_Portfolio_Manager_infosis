@@ -23,11 +23,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config.settings import API_HOST, API_PORT, MAX_WORKERS, DEFAULT_CRYPTOS
 from backend.services.data_collector import CryptoDataCollector
 from backend.services.portfolio_manager import PortfolioManager
-from ai_models.risk_analyzer import RiskAnalyzer
-from ai_models.predictor import CryptoPricePredictor
-from ai_models.investment_optimizer import InvestmentOptimizer
-from backend.services.alert_system import AlertSystem
-from backend.services.report_generator import ReportGenerator
 from utils.helpers import logger, format_currency, format_percentage
 
 def run_api():
@@ -78,6 +73,11 @@ def run_analysis():
     if not datasets:
         print("❌ No data available in database. Run 'python main.py setup' first.")
         return
+
+    from ai_models.risk_analyzer import RiskAnalyzer
+    from ai_models.predictor import CryptoPricePredictor
+    from ai_models.investment_optimizer import InvestmentOptimizer
+    from backend.services.report_generator import ReportGenerator
 
     risk_analyzer = RiskAnalyzer()
     predictor = CryptoPricePredictor()
@@ -168,6 +168,7 @@ def run_analysis():
 
     # ---- Alert Check ----
     async def check_alerts_async():
+        from backend.services.alert_system import AlertSystem
         alert_sys = AlertSystem()
         # Mock market data for alert check
         market_data = [{"coin_id": cid, "price": df["price"].iloc[-1]} for cid, df in datasets.items()]

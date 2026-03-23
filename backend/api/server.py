@@ -34,12 +34,6 @@ from backend.models.schemas import User, Portfolio, Transaction, PyObjectId
 from backend.services.data_collector import CryptoDataCollector, generate_sample_data
 from backend.services.portfolio_manager import PortfolioManager
 from backend.services.alert_system import AlertSystem
-from backend.services.report_generator import ReportGenerator
-from ai_models.risk_analyzer import RiskAnalyzer
-from ai_models.predictor import CryptoPricePredictor
-from ai_models.investment_optimizer import InvestmentOptimizer
-from backend.services.backtesting_engine import BacktestingEngine
-from backend.services.exchange_service import ExchangeService
 from utils.helpers import logger
 from config.settings import REPORTS_DIR
 
@@ -99,16 +93,37 @@ async def disconnect(sid):
 # Default User for Seeding/Dev
 PARAMESH_USER_ID = ObjectId("65e9b1e8a1d2c3b4e5f6a7b9")
 
-# Initialize services
+class LazyService:
+    """Deffered initialization of heavy services to save startup memory."""
+    def __init__(self, import_path, class_name, *args, **kwargs):
+        self._import_path = import_path
+        self._class_name = class_name
+        self._args = args
+        self._kwargs = kwargs
+        self._instance = None
+    def _get_instance(self):
+        if self._instance is None:
+            import importlib
+            logger.info(f"🚀 Lazy loading heavy service: {self._class_name}")
+            module = importlib.import_module(self._import_path)
+            cls = getattr(module, self._class_name)
+            self._instance = cls(*self._args, **self._kwargs)
+        return self._instance
+    def __getattr__(self, name):
+        return getattr(self._get_instance(), name)
+
+# Initialize base services (lightweight)
 collector = CryptoDataCollector(redis_url=REDIS_URL, enable_redis=ENABLE_REDIS)
 portfolio_mgr = PortfolioManager()
-risk_analyzer = RiskAnalyzer()
-predictor = CryptoPricePredictor()
-optimizer = InvestmentOptimizer()
 alert_system = AlertSystem()
-report_gen = ReportGenerator()
-backtester = BacktestingEngine(collector)
-exchange_svc = ExchangeService()
+
+# Lazy-loaded heavy services (ML / Analytics)
+risk_analyzer = LazyService("ai_models.risk_analyzer", "RiskAnalyzer")
+predictor = LazyService("ai_models.predictor", "CryptoPricePredictor")
+optimizer = LazyService("ai_models.investment_optimizer", "InvestmentOptimizer")
+report_gen = LazyService("backend.services.report_generator", "ReportGenerator")
+backtester = LazyService("backend.services.backtesting_engine", "BacktestingEngine", collector)
+exchange_svc = LazyService("backend.services.exchange_service", "ExchangeService")
 
 class HoldingRequest(BaseModel):
     coin_id: str

@@ -10,6 +10,11 @@ RUN npm run build
 FROM python:3.10-slim
 WORKDIR /app
 
+# Production environment settings
+ENV ENVIRONMENT=production
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
