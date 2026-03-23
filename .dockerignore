@@ -3,10 +3,11 @@ test_venv
 __pycache__
 .git
 .env
-data/
-database/
-reports/
-models/
+# data/ - Included for potential seeding/analysis
+# database/ - MUST BE INCLUDED (Python package)
+database/offline_storage.json
+# reports/ - Can stay ignored as they are generated
+# models/ - MUST BE INCLUDED (ML model files)
 web/node_modules/
 node_modules/
 *.sqlite
