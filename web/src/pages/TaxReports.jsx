@@ -149,13 +149,19 @@ export default function TaxReports() {
                                 <tbody>
                                     {report.details.map((row, idx) => (
                                         <tr key={idx}>
-                                            <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>{new Date(row.date || row.timestamp).toLocaleDateString()}</td>
+                                            <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                                                {row.date === 'HOLDING' ? 'Current Holding' : new Date(row.date || row.timestamp).toLocaleDateString()}
+                                            </td>
                                             <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 600 }}>{row.coin_id?.toUpperCase()}</td>
                                             <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                                 <span style={{ 
                                                     padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 700,
-                                                    background: row.type === 'BUY' ? 'rgba(0, 230, 118, 0.1)' : 'rgba(255, 82, 82, 0.1)',
-                                                    color: row.type === 'BUY' ? '#00e676' : '#ff5252'
+                                                    background: row.type === 'BUY' ? 'rgba(0, 230, 118, 0.1)' : 
+                                                               row.type === 'SELL' ? 'rgba(255, 82, 82, 0.1)' : 
+                                                               'rgba(123, 47, 239, 0.1)',
+                                                    color: row.type === 'BUY' ? '#00e676' : 
+                                                           row.type === 'SELL' ? '#ff5252' : 
+                                                           'var(--secondary)'
                                                 }}>
                                                     {row.type}
                                                 </span>
@@ -163,7 +169,8 @@ export default function TaxReports() {
                                             <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>{Number(row.qty || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
                                             <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>${Number(row.price || row.cost_basis || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                             <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right', fontWeight: 600 }} className={row.realized_pnl > 0 ? 'positive' : (row.realized_pnl < 0 ? 'negative' : '')}>
-                                                {row.realized_pnl ? `$${Number(row.realized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
+                                                {row.realized_pnl !== undefined && row.realized_pnl !== 0 ? `$${Number(row.realized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                                                 row.unrealized_pnl !== undefined ? `($${Number(row.unrealized_pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : '-'}
                                             </td>
                                         </tr>
                                     ))}

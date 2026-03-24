@@ -70,6 +70,13 @@ class CryptoPricePredictor:
             self.pipeline.run_training_cycle(df, coin_id)
             prediction = self.pipeline.get_prediction(df, coin_id, days_ahead)
             
+        # Format for frontend compatibility (Ensure 'predictions' list exists for Recharts)
+        if "forecast" in prediction and "predictions" not in prediction:
+            prediction["predictions"] = [{"date": p["date"], "predicted_price": p["price"]} for p in prediction["forecast"]]
+            
+        if "forecast" in prediction and "predicted_price" not in prediction:
+            prediction["predicted_price"] = prediction["forecast"][-1]["price"]
+            
         return prediction
 
     def ensemble_predict(self, df: pd.DataFrame, coin_id: str, days_ahead: int = 7) -> Dict:

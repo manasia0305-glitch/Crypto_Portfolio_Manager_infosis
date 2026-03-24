@@ -92,6 +92,9 @@ class CryptoDataCollector:
                 
             entry = {
                 "coin_id": coin["id"],
+                "name": coin.get("name"),
+                "symbol": coin.get("symbol"),
+                "image": coin.get("image"),
                 "price": coin["current_price"],
                 "market_cap": coin["market_cap"],
                 "total_volume": coin["total_volume"],
@@ -128,7 +131,7 @@ class CryptoDataCollector:
             await db["market_data"].insert_many(market_entries)
             logger.info(f"Stored {len(market_entries)} market data points in {get_storage_name()}")
             
-        return data
+        return market_entries
 
     async def get_latest_market_data(self, limit: int = 50) -> List[Dict]:
         """Retrieve the latest market data from Redis (cache) or MongoDB."""

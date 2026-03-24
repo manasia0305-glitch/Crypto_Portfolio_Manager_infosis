@@ -145,36 +145,43 @@ class ReportGenerator:
                 txtype = tx.get("type", "BUY")
                 qty = float(tx.get("quantity", 0))
                 price = float(tx.get("price", 0))
+                dt = tx.get("timestamp")
                 
+                # Record EVERY transaction for the report details
+                entry = {
+                    "date": dt,
+                    "coin_id": coin_id,
+                    "type": txtype,
+                    "qty": qty,
+                    "price": price,
+                    "notes": tx.get("notes", "")
+                }
+
                 if txtype == "BUY":
-                    buys.append({"qty": qty, "price": price, "date": tx.get("timestamp")})
+                    buys.append({"qty": qty, "price": price, "date": dt})
+                    entry["realized_pnl"] = 0 # No gain on buy
                 elif txtype == "SELL":
                     sell_qty = qty
+                    sale_gain = 0.0
                     while sell_qty > 0 and buys:
                         oldest_buy = buys[0]
                         if oldest_buy["qty"] <= sell_qty:
                             # Fully consume this buy
                             gain = oldest_buy["qty"] * (price - oldest_buy["price"])
-                            realized_pnl += gain
+                            sale_gain += gain
                             sell_qty -= oldest_buy["qty"]
                             buys.pop(0)
                         else:
                             # Partially consume this buy
                             gain = sell_qty * (price - oldest_buy["price"])
-                            realized_pnl += gain
+                            sale_gain += gain
                             oldest_buy["qty"] -= sell_qty
                             sell_qty = 0
                     
-                    # Record the sale for the CSV
-                    report_data.append({
-                        "date": tx.get("timestamp"),
-                        "coin_id": coin_id,
-                        "type": "SELL",
-                        "quantity": qty,
-                        "price": price,
-                        "realized_pnl": realized_pnl, # This is cumulative for simplicity in row
-                        "notes": tx.get("notes", "")
-                    })
+                    realized_pnl += sale_gain
+                    entry["realized_pnl"] = sale_gain
+                
+                report_data.append(entry)
                 
             # After processing all current transactions, calculate unrealized for what's left
             remaining_qty = sum(b["qty"] for b in buys)
@@ -191,15 +198,15 @@ class ReportGenerator:
                 current_value = remaining_qty * current_price
                 unrealized_pnl = current_value - remaining_cost
             
-            # Add remaining holdings to report data (at the end or per coin)
+            # Add summary "HOLDING" row for remaining assets
             if remaining_qty > 0:
                 report_data.append({
                     "date": "HOLDING",
                     "coin_id": coin_id,
                     "type": "HOLD",
-                    "quantity": remaining_qty,
-                    "avg_cost": remaining_cost / remaining_qty if remaining_qty > 0 else 0,
-                    "current_price": current_price,
+                    "qty": remaining_qty,
+                    "cost_basis": remaining_cost / remaining_qty if remaining_qty > 0 else 0,
+                    "price": current_price,
                     "unrealized_pnl": unrealized_pnl
                 })
                 
